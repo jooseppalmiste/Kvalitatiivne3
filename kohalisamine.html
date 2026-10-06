@@ -32,6 +32,16 @@
       width: 100%;
       height: 70%;
     }
+
+    #kohatyybiInput,
+    #kast1 {
+      min-width: 160px;
+    }
+
+    .ulemiste-silt {
+      font-weight: bold;
+      font-size: 14px;
+    }
   </style>
 
   <script>
@@ -81,14 +91,6 @@
     }
 
 
-    function kuvaTyyp(tyyp){
-      if(tyyp == "kool") return "töökoda";
-      if(tyyp == "kirik") return "Circle K";
-      if(tyyp == "kauplus") return "Norm parkla";
-      return tyyp || "koht";
-    }
-
-
     function kuva(andmed){
 
       console.log(andmed);
@@ -104,7 +106,7 @@
 
         if(!isNaN(lat) && !isNaN(lng)){
 
-          let tyyp = kuvaTyyp(kohad[i][2]);
+          let tyyp = kohad[i][2] || "koht";
           let kommentaar = kohad[i][3] || "";
 
           let tekst = tyyp;
@@ -119,9 +121,18 @@
         }
       }
 
-      // Ülemiste keskuse püsiv punkt
-      L.marker([ULEMISTE.lat, ULEMISTE.lng])
-        .bindPopup("<b>Ülemiste keskus</b><br>Püsiv punkt")
+      // Ülemiste keskuse püsiv ja hästi nähtav punkt
+      L.circleMarker([ULEMISTE.lat, ULEMISTE.lng], {
+        radius: 11,
+        weight: 4,
+        fillOpacity: 1
+      })
+        .bindPopup("<b>Ülemiste keskus</b><br>Suur-Sõjamäe 4")
+        .bindTooltip("Ülemiste keskus", {
+          permanent: true,
+          direction: "top",
+          className: "ulemiste-silt"
+        })
         .addTo(markerid);
     }
 
@@ -153,7 +164,6 @@
       jooned.clearLayers();
 
       // ARVUTA KAUGUS IGAST TABELIS OLEVAST KOHAST
-
       let kaugused = [];
 
       for(let i = 0; i < kohad.length; i++){
@@ -163,7 +173,7 @@
 
         if(!isNaN(lat) && !isNaN(lng)){
 
-          let tyyp = kuvaTyyp(kohad[i][2]);
+          let tyyp = kohad[i][2] || "koht";
           let kommentaar = kohad[i][3] || "";
 
           let nimi = kommentaar != ""
@@ -196,13 +206,10 @@
 
       L.polyline([e.latlng, ulemisteKoht]).addTo(jooned);
 
-
-      // järjestame lähimast kaugemani
-
+      // Järjesta lähimast kaugemani
       kaugused.sort(function(a, b){
         return a.kaugus - b.kaugus;
       });
-
 
       let tekst =
         "<b>Valitud asukoht:</b> " +
@@ -211,7 +218,6 @@
         e.latlng.lng.toFixed(5) +
         "<br><br>" +
         "<b>Kaugused tabelis olevatest kohtadest:</b><br>";
-
 
       for(let i = 0; i < kaugused.length; i++){
 
@@ -222,24 +228,24 @@
           " km<br>";
       }
 
-
       document.getElementById("vastus").innerHTML = tekst;
 
-
       // SALVESTA VALITUD KOHT GOOGLE SHEETSI
-
       let tyyp =
-        document.getElementById("tyybivalik").value;
+        document.getElementById("kohatyybiInput").value.trim();
 
       let kommentaar =
-        document.getElementById("kast1").value;
+        document.getElementById("kast1").value.trim();
+
+      if(tyyp == ""){
+        tyyp = "koht";
+      }
 
       let lisand =
         "laiuskraad=" + e.latlng.lat +
         "&pikkuskraad=" + e.latlng.lng +
         "&tyyp=" + encodeURIComponent(tyyp) +
         "&kommentaar=" + encodeURIComponent(kommentaar);
-
 
       fetch(SCRIPT_URL + "?" + lisand)
         .then(d => d.json())
@@ -254,20 +260,24 @@
 
   <div id="valikud">
 
-    Tüüp:
+    Koha nimi / tüüp:
 
-    <select id="tyybivalik">
-      <option>töökoda</option>
-      <option>Circle K</option>
-      <option>Norm parkla</option>
-    </select>
+    <input
+      type="text"
+      id="kohatyybiInput"
+      placeholder="nt Coop, Circle K, töökoda"
+    />
 
     Kommentaar:
 
-    <input type="text" id="kast1" />
+    <input
+      type="text"
+      id="kast1"
+      placeholder="soovi korral lisainfo"
+    />
 
     <span>
-      Klõpsa kaardil asukoha valimiseks.
+      Klõpsa kaardil asukoha lisamiseks.
     </span>
 
   </div>
