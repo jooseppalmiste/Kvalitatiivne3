@@ -39,9 +39,17 @@
     var hypik;
     var kohad = [];
     var markerid;
+    var jooned;
+    var valitudMarker;
 
     const SCRIPT_URL =
       "https://script.google.com/macros/s/AKfycbzlFtosZNFZva7LLO_alJ8hBshxKHm0RjsW6o5Jo1Kyxhajg4xlueVfEHtMKHTqHaUdXg/exec";
+
+    const ULEMISTE = {
+      lat: 59.42159,
+      lng: 24.79304,
+      nimi: "Ülemiste keskus"
+    };
 
 
     function algus(){
@@ -61,12 +69,23 @@
       markerid = L.layerGroup();
       markerid.addTo(kaart);
 
+      jooned = L.layerGroup();
+      jooned.addTo(kaart);
+
       kaart.on("click", vajutus);
 
       // Loe Google Sheetis olevad andmed
       fetch(SCRIPT_URL)
         .then(d => d.json())
         .then(kuva);
+    }
+
+
+    function kuvaTyyp(tyyp){
+      if(tyyp == "kool") return "töökoda";
+      if(tyyp == "kirik") return "Circle K";
+      if(tyyp == "kauplus") return "Norm parkla";
+      return tyyp || "koht";
     }
 
 
@@ -85,7 +104,7 @@
 
         if(!isNaN(lat) && !isNaN(lng)){
 
-          let tyyp = kohad[i][2] || "koht";
+          let tyyp = kuvaTyyp(kohad[i][2]);
           let kommentaar = kohad[i][3] || "";
 
           let tekst = tyyp;
@@ -99,6 +118,11 @@
             .addTo(markerid);
         }
       }
+
+      // Ülemiste keskuse püsiv punkt
+      L.marker([ULEMISTE.lat, ULEMISTE.lng])
+        .bindPopup("<b>Ülemiste keskus</b><br>Püsiv punkt")
+        .addTo(markerid);
     }
 
 
@@ -114,6 +138,19 @@
         )
         .openOn(kaart);
 
+      // Näita valitud punkti kaardil
+      if(valitudMarker){
+        kaart.removeLayer(valitudMarker);
+      }
+
+      valitudMarker = L.circleMarker(e.latlng, {
+        radius: 7,
+        weight: 3,
+        fillOpacity: 1
+      }).addTo(kaart);
+
+      // Eemalda eelmise valiku ühendusjooned
+      jooned.clearLayers();
 
       // ARVUTA KAUGUS IGAST TABELIS OLEVAST KOHAST
 
@@ -126,7 +163,7 @@
 
         if(!isNaN(lat) && !isNaN(lng)){
 
-          let tyyp = kohad[i][2] || "koht";
+          let tyyp = kuvaTyyp(kohad[i][2]);
           let kommentaar = kohad[i][3] || "";
 
           let nimi = kommentaar != ""
@@ -142,8 +179,22 @@
             nimi: nimi,
             kaugus: kaugus
           });
+
+          // Ühenda valitud koht tabelis oleva kohaga joone abil
+          L.polyline([e.latlng, tabeliKoht]).addTo(jooned);
         }
       }
+
+      // Lisa Ülemiste keskus alati kauguste hulka
+      let ulemisteKoht = L.latLng(ULEMISTE.lat, ULEMISTE.lng);
+      let ulemisteKaugus = e.latlng.distanceTo(ulemisteKoht) / 1000;
+
+      kaugused.push({
+        nimi: ULEMISTE.nimi,
+        kaugus: ulemisteKaugus
+      });
+
+      L.polyline([e.latlng, ulemisteKoht]).addTo(jooned);
 
 
       // järjestame lähimast kaugemani
@@ -206,9 +257,9 @@
     Tüüp:
 
     <select id="tyybivalik">
-      <option>kool</option>
-      <option>kirik</option>
-      <option>kauplus</option>
+      <option>töökoda</option>
+      <option>Circle K</option>
+      <option>Norm parkla</option>
     </select>
 
     Kommentaar:
