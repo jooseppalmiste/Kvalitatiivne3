@@ -33,7 +33,7 @@
       height: 70%;
     }
 
-    #kohatyybiInput,
+    #nimi,
     #kast1 {
       min-width: 160px;
     }
@@ -84,7 +84,6 @@
 
       kaart.on("click", vajutus);
 
-      // Loe Google Sheetis olevad andmed
       fetch(SCRIPT_URL)
         .then(d => d.json())
         .then(kuva);
@@ -121,7 +120,6 @@
         }
       }
 
-      // Ülemiste keskuse püsiv ja hästi nähtav punkt
       L.circleMarker([ULEMISTE.lat, ULEMISTE.lng], {
         radius: 11,
         weight: 4,
@@ -149,7 +147,6 @@
         )
         .openOn(kaart);
 
-      // Näita valitud punkti kaardil
       if(valitudMarker){
         kaart.removeLayer(valitudMarker);
       }
@@ -160,10 +157,8 @@
         fillOpacity: 1
       }).addTo(kaart);
 
-      // Eemalda eelmise valiku ühendusjooned
       jooned.clearLayers();
 
-      // ARVUTA KAUGUS IGAST TABELIS OLEVAST KOHAST
       let kaugused = [];
 
       for(let i = 0; i < kohad.length; i++){
@@ -190,12 +185,10 @@
             kaugus: kaugus
           });
 
-          // Ühenda valitud koht tabelis oleva kohaga joone abil
           L.polyline([e.latlng, tabeliKoht]).addTo(jooned);
         }
       }
 
-      // Lisa Ülemiste keskus alati kauguste hulka
       let ulemisteKoht = L.latLng(ULEMISTE.lat, ULEMISTE.lng);
       let ulemisteKaugus = e.latlng.distanceTo(ulemisteKoht) / 1000;
 
@@ -206,7 +199,6 @@
 
       L.polyline([e.latlng, ulemisteKoht]).addTo(jooned);
 
-      // Järjesta lähimast kaugemani
       kaugused.sort(function(a, b){
         return a.kaugus - b.kaugus;
       });
@@ -230,22 +222,26 @@
 
       document.getElementById("vastus").innerHTML = tekst;
 
-      // SALVESTA VALITUD KOHT GOOGLE SHEETSI
+      let nimi =
+        document.getElementById("nimi").value.trim();
+
       let tyyp =
-        document.getElementById("kohatyybiInput").value.trim();
+        document.getElementById("tyybivalik").value;
 
       let kommentaar =
         document.getElementById("kast1").value.trim();
 
-      if(tyyp == ""){
-        tyyp = "koht";
+      let salvestatavKommentaar = nimi;
+
+      if(kommentaar != ""){
+        salvestatavKommentaar += " – " + kommentaar;
       }
 
       let lisand =
         "laiuskraad=" + e.latlng.lat +
         "&pikkuskraad=" + e.latlng.lng +
         "&tyyp=" + encodeURIComponent(tyyp) +
-        "&kommentaar=" + encodeURIComponent(kommentaar);
+        "&kommentaar=" + encodeURIComponent(salvestatavKommentaar);
 
       fetch(SCRIPT_URL + "?" + lisand)
         .then(d => d.json())
@@ -260,32 +256,30 @@
 
   <div id="valikud">
 
-    Koha nimi / tüüp:
+    Nimi:
 
     <input
       type="text"
-      id="kohatyybiInput"
-      placeholder="nt Coop, Circle K, töökoda"
+      id="nimi"
     />
+
+    <select id="tyybivalik">
+      <option>Circle K</option>
+      <option>töökoda</option>
+      <option>Norm parkla</option>
+    </select>
 
     Kommentaar:
 
     <input
       type="text"
       id="kast1"
-      placeholder="soovi korral lisainfo"
     />
 
-    <span>
-      Klõpsa kaardil asukoha lisamiseks.
-    </span>
-
   </div>
 
 
-  <div id="vastus">
-    Vali kaardilt asukoht.
-  </div>
+  <div id="vastus"></div>
 
 
   <div id="kaardikiht"></div>
