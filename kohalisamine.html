@@ -12,32 +12,26 @@
       margin: 0;
       font-family: Arial, sans-serif;
     }
-
     html, body {
       height: 100%;
       width: 100%;
     }
-
     #valikud {
       padding: 10px;
     }
-
     #vastus {
       padding: 10px;
       max-height: 180px;
       overflow-y: auto;
     }
-
     #kaardikiht {
       width: 100%;
       height: 70%;
     }
-
     #nimi,
     #kast1 {
       min-width: 160px;
     }
-
     .ulemiste-silt {
       font-weight: bold;
       font-size: 14px;
@@ -54,18 +48,14 @@
 
     const SCRIPT_URL =
       "https://script.google.com/macros/s/AKfycbzlFtosZNFZva7LLO_alJ8hBshxKHm0RjsW6o5Jo1Kyxhajg4xlueVfEHtMKHTqHaUdXg/exec";
-
     const ULEMISTE = {
       lat: 59.42159,
       lng: 24.79304,
       nimi: "Ülemiste keskus"
     };
 
-
     function algus(){
-
       kaart = L.map('kaardikiht').setView([59.439, 24.773], 12);
-
       new L.TileLayer(
         'https://tiles.maaamet.ee/tm/tms/1.0.0/hybriid@GMC/{z}/{x}/{y}.png&ASUTUS=TLU&ERIALA=DIGIHUMANITAARIA',
         {
@@ -73,53 +63,36 @@
           tms: true
         }
       ).addTo(kaart);
-
       hypik = L.popup();
-
       markerid = L.layerGroup();
       markerid.addTo(kaart);
-
       jooned = L.layerGroup();
       jooned.addTo(kaart);
-
       kaart.on("click", vajutus);
-
       fetch(SCRIPT_URL)
         .then(d => d.json())
         .then(kuva);
     }
 
-
     function kuva(andmed){
-
       console.log(andmed);
-
       kohad = andmed;
-
       markerid.clearLayers();
-
       for(let i = 0; i < kohad.length; i++){
-
         let lat = parseFloat(kohad[i][0]);
         let lng = parseFloat(kohad[i][1]);
-
         if(!isNaN(lat) && !isNaN(lng)){
-
           let tyyp = kohad[i][2] || "koht";
           let kommentaar = kohad[i][3] || "";
-
           let tekst = tyyp;
-
           if(kommentaar != ""){
             tekst += ": " + kommentaar;
           }
-
           L.marker([lat, lng])
             .bindPopup(tekst)
             .addTo(markerid);
         }
       }
-
       L.circleMarker([ULEMISTE.lat, ULEMISTE.lng], {
         radius: 11,
         weight: 4,
@@ -134,9 +107,7 @@
         .addTo(markerid);
     }
 
-
     function vajutus(e){
-
       hypik
         .setLatLng(e.latlng)
         .setContent(
@@ -146,7 +117,6 @@
           e.latlng.lng.toFixed(5)
         )
         .openOn(kaart);
-
       if(valitudMarker){
         kaart.removeLayer(valitudMarker);
       }
@@ -156,42 +126,29 @@
         weight: 3,
         fillOpacity: 1
       }).addTo(kaart);
-
       jooned.clearLayers();
-
       let kaugused = [];
-
       for(let i = 0; i < kohad.length; i++){
-
         let lat = parseFloat(kohad[i][0]);
         let lng = parseFloat(kohad[i][1]);
-
         if(!isNaN(lat) && !isNaN(lng)){
-
           let tyyp = kohad[i][2] || "koht";
           let kommentaar = kohad[i][3] || "";
-
           let nimi = kommentaar != ""
             ? kommentaar + " (" + tyyp + ")"
             : tyyp;
-
           let tabeliKoht = L.latLng(lat, lng);
-
           let kaugus =
             e.latlng.distanceTo(tabeliKoht) / 1000;
-
           kaugused.push({
             nimi: nimi,
             kaugus: kaugus
           });
-
           L.polyline([e.latlng, tabeliKoht]).addTo(jooned);
         }
       }
-
       let ulemisteKoht = L.latLng(ULEMISTE.lat, ULEMISTE.lng);
       let ulemisteKaugus = e.latlng.distanceTo(ulemisteKoht) / 1000;
-
       kaugused.push({
         nimi: ULEMISTE.nimi,
         kaugus: ulemisteKaugus
@@ -202,7 +159,6 @@
       kaugused.sort(function(a, b){
         return a.kaugus - b.kaugus;
       });
-
       let tekst =
         "<b>Valitud asukoht:</b> " +
         e.latlng.lat.toFixed(5) +
@@ -210,29 +166,22 @@
         e.latlng.lng.toFixed(5) +
         "<br><br>" +
         "<b>Kaugused tabelis olevatest kohtadest:</b><br>";
-
       for(let i = 0; i < kaugused.length; i++){
-
         tekst +=
           kaugused[i].nimi +
           " – " +
           kaugused[i].kaugus.toFixed(2) +
           " km<br>";
       }
-
+      
       document.getElementById("vastus").innerHTML = tekst;
-
       let nimi =
         document.getElementById("nimi").value.trim();
-
       let tyyp =
         document.getElementById("tyybivalik").value;
-
       let kommentaar =
         document.getElementById("kast1").value.trim();
-
       let salvestatavKommentaar = nimi;
-
       if(kommentaar != ""){
         salvestatavKommentaar += " – " + kommentaar;
       }
@@ -242,7 +191,6 @@
         "&pikkuskraad=" + e.latlng.lng +
         "&tyyp=" + encodeURIComponent(tyyp) +
         "&kommentaar=" + encodeURIComponent(salvestatavKommentaar);
-
       fetch(SCRIPT_URL + "?" + lisand)
         .then(d => d.json())
         .then(kuva);
@@ -250,14 +198,9 @@
 
   </script>
 </head>
-
-
 <body onload="algus()">
-
   <div id="valikud">
-
     Nimi:
-
     <input
       type="text"
       id="nimi"
@@ -268,21 +211,14 @@
       <option>töökoda</option>
       <option>Norm parkla</option>
     </select>
-
+    
     Kommentaar:
-
     <input
       type="text"
       id="kast1"
     />
-
   </div>
-
-
   <div id="vastus"></div>
-
-
   <div id="kaardikiht"></div>
-
 </body>
 </html>
